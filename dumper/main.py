@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import sys
@@ -14,30 +15,38 @@ def get_query(query_path):
         return json.load(f)
 
 
-def init_writer():
-    writer = get_csv_writer('data_dump.csv')
+def init_writer(filename):
+    writer = get_csv_writer(filename)
     writer.writerow(['domain','form_id','user_id','time_completed','time_received','delta_cs_hours'])
     return writer
 
 
+def dot():
+    sys.stdout.write('.')
+    sys.stdout.flush()
+
+
 if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        print "Usage: python dumper.main [ES URL] [ES INDEX] [QUERY FILE PATH]"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("url", help="ES URL")
+    parser.add_argument("index", help="ES index")
+    parser.add_argument("query", help="Path to query file")
+    parser.add_argument("-o", "--output", default="data_dump.csv", help="Path to output file for data")
+    parser.add_argument("--domain-output", default="domains.csv", help="Path to output file for domains")
+    args = parser.parse_args()
 
-    es_url = sys.argv[1]
-    es_index = sys.argv[2]
-    query_path = sys.argv[3]
+    query = get_query(args.query)
+    writer = init_writer(args.output)
 
-    query = get_query(query_path)
-    writer = init_writer()
-
-    es = get_es(es_url)
+    es = get_es(args.url)
     counter = 0
     unique_domains = set()
-    for doc in iter_data(es, es_index, query):
+    for doc in iter_data(es, args.index, query):
         counter += 1
+        if counter % 100 == 0:
+            dot()
         row = parse_doc(doc)
         row.write(writer)
         unique_domains.add(row.domain)
 
-    write_domains(unique_domains, "all_domains.csv")
+    write_domains(unique_domains, args.domain_output)
