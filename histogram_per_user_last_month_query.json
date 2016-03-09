@@ -1,0 +1,63 @@
+{
+  "_source": false,
+  "aggs": {
+    "users": {
+      "aggs": {
+        "average_deltacs": {
+          "avg": {
+            "script": "doc['received_on'].value - doc['form.meta.timeEnd'].value"
+          }
+        }
+      },
+      "terms": {
+        "field": "form.meta.userID",
+        "size": 0
+      }
+    }
+  },
+  "query": {
+    "filtered": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "received_on": {
+                  "gte": "now-30d/d"
+                }
+              }
+            },
+            {
+              "script": {
+                "script": "(doc['received_on'].value - doc['form.meta.timeEnd'].value) < 5184000000"
+              }
+            }
+          ],
+          "must_not": [
+            {
+              "missing": {
+                "field": "form.meta"
+              }
+            },
+            {
+              "missing": {
+                "field": "form.meta.userID"
+              }
+            },
+            {
+              "missing": {
+                "field": "form.meta.username"
+              }
+            },
+            {
+              "term": {
+                "form.meta.deviceID": "cloudcare"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "size": 0
+}

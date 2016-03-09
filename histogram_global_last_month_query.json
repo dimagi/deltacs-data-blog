@@ -1,0 +1,35 @@
+{
+  "_source": false,
+  "aggs": {
+    "times": {
+      "histogram": {
+        "interval": 1,
+        "script": "(doc['received_on'].value - doc['form.meta.timeEnd'].value) / 3600000"
+      }
+    }
+  },
+  "query": {
+    "filtered": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "not": {
+                "missing": {
+                  "field": "form.meta"
+                }
+              }
+            },
+            {
+              "range": {
+                "received_on": {
+                  "gte": "now-1d/d"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }, "size": 0
+}

@@ -1,0 +1,43 @@
+{
+  "_source": ["domain","form.meta.userID","form.meta.timeEnd","received_on"],
+  "query": {
+    "filtered": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "received_on": {
+                  "gte": "now-365d/d"
+                }
+              }
+            }
+          ],
+          "must_not": [
+            {
+              "missing": {
+                "field": "form.meta"
+              }
+            },
+            {
+              "missing": {
+                "field": "form.meta.userID"
+              }
+            },
+            {
+              "missing": {
+                "field": "form.meta.username"
+              }
+            },
+            {
+              "term": {
+                "form.meta.deviceID": "cloudcare"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "size": 999999999999999999999999999
+}
