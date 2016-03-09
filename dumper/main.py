@@ -3,6 +3,7 @@ import os
 import sys
 
 from dumper.es_utils import iter_data, get_es
+from dumper.parser import get_csv_writer, parse_doc, write_domains
 
 
 def get_query(query_path):
@@ -11,6 +12,12 @@ def get_query(query_path):
 
     with open(query_path, 'r') as f:
         return json.load(f)
+
+
+def init_writer():
+    writer = get_csv_writer('data_dump.csv')
+    writer.writerow(['domain','form_id','user_id','time_completed','time_received','delta_cs_hours'])
+    return writer
 
 
 if __name__ == '__main__':
@@ -22,11 +29,15 @@ if __name__ == '__main__':
     query_path = sys.argv[3]
 
     query = get_query(query_path)
+    writer = init_writer()
 
     es = get_es(es_url)
     counter = 0
+    unique_domains = set()
     for doc in iter_data(es, es_index, query):
         counter += 1
-        print doc
+        row = parse_doc(doc)
+        row.write(writer)
+        unique_domains.add(row.domain)
 
-    print counter
+    write_domains(unique_domains, "all_domains.csv")
