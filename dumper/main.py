@@ -15,7 +15,7 @@ def get_query(query_path):
         return json.load(f)
 
 
-def init_writer(query_choice):
+def init_writer(output_file, query_choice):
     writer = get_csv_writer(output_file)
     if 'f' == query_choice:
         writer.writerow(['domain','form_id','user_id','time_completed','time_received','delta_cs_hours'])
@@ -29,7 +29,7 @@ def dot():
     sys.stdout.flush()
 
 
-def dump_forms(query, writer):
+def dump_forms(es, index, query, writer):
     counter = 0
     unique_domains = set()
     for doc in iter_forms_data(es, index, query):
@@ -43,7 +43,7 @@ def dump_forms(query, writer):
     write_domains(unique_domains, args.domain_output)
 
 
-def dump_users(query, writer):
+def dump_users(es, index, query, writer):
     counter = 0
     for hit in query_users_data(es, index, query):
         counter += 1
@@ -53,14 +53,14 @@ def dump_users(query, writer):
         user_obj.write(writer)
 
 
-def execute_query_choice(query_choice):
-    writer = init_writer(query_choice)
+def execute_query_choice(es, index, output_file, query_choice):
+    writer = init_writer(output_file, query_choice)
     if 'f' == query_choice:
         query = get_query('form_dump_query.json')
-        dump_forms(query, writer)
+        dump_forms(es, index, query, writer)
     elif 'u' == query_choice:
         query = get_query('user_dump_query.json')
-        dump_users(query, writer)
+        dump_users(es, index, query, writer)
     else:
         raise Exception('Invalid parameter entered for query-type')
 
@@ -75,7 +75,4 @@ if __name__ == '__main__':
     parser.add_argument("--domain-output", default="domains.csv", help="Path to output file for domains, if doing forms dump")
     args = parser.parse_args()
 
-    es = get_es(args.url)
-    index = args.index
-    output_file = args.output
-    execute_query_choice(args.query_type)
+    execute_query_choice(get_es(args.url), args.index, args.output, args.query_type)
