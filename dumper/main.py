@@ -71,7 +71,6 @@ if __name__ == '__main__':
     parser.add_argument("url", help="ES URL")
     parser.add_argument("index", help="ES index")
     parser.add_argument("query-type", help="'f' to run the forms dump, 'u' to run the aggregation-by-users dump")
-    parser.add_argument("query", default="", help="Path to query file")
     parser.add_argument("-o", "--output", default="data_dump.csv", help="Path to output file for data")
     parser.add_argument("--domain-output", default="domains.csv", help="Path to output file for domains, if doing forms dump")
     args = parser.parse_args()
