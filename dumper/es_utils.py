@@ -1,7 +1,10 @@
 from elasticsearch import Elasticsearch
 
+NUM_RESULTS_DESIRED = 1000000
+# Integer.MAX_VALUE in Java = 2147483647
 
-def iter_data(es_client, index, query):
+
+def iter_forms_data(es_client, index, query):
     page = es_client.search(
         index=index,
         scroll='2m',
@@ -19,6 +22,17 @@ def iter_data(es_client, index, query):
         scroll_size = len(page['hits']['hits'])
         for doc in page['hits']['hits']:
             yield doc
+
+
+def query_users_data(es_client, index, query):
+    page = es_client.search(
+        index=index,
+        size=NUM_RESULTS_DESIRED,
+        body=query
+    )
+
+    for hit in page['aggregations']['users']['buckets']:
+            yield hit
 
 
 def get_es(url):
