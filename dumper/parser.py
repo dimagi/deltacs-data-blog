@@ -1,6 +1,6 @@
 import csv
-
 import iso8601
+
 
 class FormSubmission:
 
@@ -25,13 +25,23 @@ class FormSubmission:
         ])
 
 
+class UserData:
+
+    def __init__(self, user_id, avg_delta_cs):
+        self.user_id = user_id
+        self.avg_delta_cs = avg_delta_cs
+
+    def write(self, writer):
+        writer.writerow([self.user_id, self.avg_delta_cs])
+
+
 def get_csv_writer(output_filename):
     csv_file = open(output_filename, 'w')
     writer = csv.writer(csv_file, delimiter=',')
     return writer
 
 
-def parse_doc(doc):
+def parse_form_doc(doc):
     doc_id = doc['_id']
     source_obj = doc['_source']
     meta_obj = source_obj['form']['meta']
@@ -44,6 +54,10 @@ def parse_doc(doc):
     if not user_id:
         print doc
     return FormSubmission(domain_name, doc_id, user_id, time_completed, time_received)
+
+
+def parse_user(hit):
+    return UserData(hit['key'], hit['average_deltacs']['value'])
 
 
 def write_domains(domains, output_filename):

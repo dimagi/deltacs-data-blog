@@ -3,8 +3,8 @@ import json
 import os
 import sys
 
-from dumper.es_utils import iter_data, get_es
-from dumper.parser import get_csv_writer, parse_doc, write_domains
+from dumper.es_utils import iter_forms_data, query_users_data, get_es
+from dumper.parser import get_csv_writer, parse_user, parse_form_doc, write_domains
 
 
 def get_query(query_path):
@@ -17,7 +17,10 @@ def get_query(query_path):
 
 def init_writer(filename):
     writer = get_csv_writer(filename)
-    writer.writerow(['domain','form_id','user_id','time_completed','time_received','delta_cs_hours'])
+    if 'f' == query_choice:
+        writer.writerow(['domain','form_id','user_id','time_completed','time_received','delta_cs_hours'])
+    elif 'u' == query_choice:
+        writer.writerow(['user_id','avg_delta_cs'])
     return writer
 
 
@@ -26,27 +29,49 @@ def dot():
     sys.stdout.flush()
 
 
+def dump_forms():
+    counter = 0
+    unique_domains = set()
+    for doc in iter_forms_data(es, index, query):
+        counter += 1
+        if counter % 100 == 0:
+            dot()
+        form_obj = parse_form_doc(doc)
+        form_obj.write(writer)
+        unique_domains.add(form_obj.domain)
+
+    write_domains(unique_domains, args.domain_output)
+
+
+def dump_users():
+    counter = 0
+    for hit in query_users_data(es, index, query):
+        counter += 1
+        if counter % 100 == 0:
+            dot()
+        user_obj = parse_user(hit)
+        user_obj.write(writer)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("url", help="ES URL")
     parser.add_argument("index", help="ES index")
-    parser.add_argument("query", help="Path to query file")
+    parser.add_argument("query-type", help="'f' to run the forms dump, 'u' to run the aggregation-by-users dump")
+    parser.add_argument("query", default="", help="Path to query file")
     parser.add_argument("-o", "--output", default="data_dump.csv", help="Path to output file for data")
-    parser.add_argument("--domain-output", default="domains.csv", help="Path to output file for domains")
+    parser.add_argument("--domain-output", default="domains.csv", help="Path to output file for domains, if doing forms dump")
     args = parser.parse_args()
 
     query = get_query(args.query)
+    es = get_es(args.url)
+    index = args.index
     writer = init_writer(args.output)
 
-    es = get_es(args.url)
-    counter = 0
-    unique_domains = set()
-    for doc in iter_data(es, args.index, query):
-        counter += 1
-        if counter % 100 == 0:
-            dot()
-        row = parse_doc(doc)
-        row.write(writer)
-        unique_domains.add(row.domain)
-
-    write_domains(unique_domains, args.domain_output)
+    query_choice = args.query_type
+    if 'f' == query_choice:
+        dump_forms()
+    elif 'u' == query_choice:
+        dump_users()
+    else:
+        raise Exception('Invalid parameter entered for query-type')
