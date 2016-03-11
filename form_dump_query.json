@@ -8,7 +8,7 @@
             {
               "range": {
                 "received_on": {
-                  "gte": "now-10m/m"
+                  "gte": "now-365d/d"
                 }
               }
             }

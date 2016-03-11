@@ -9,7 +9,7 @@ def iter_forms_data(es_client, index, query):
         index=index,
         scroll='2m',
         search_type='scan',
-        size=10,
+        size=2500,
         body=query
     )
 

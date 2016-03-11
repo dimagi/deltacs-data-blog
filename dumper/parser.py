@@ -11,8 +11,11 @@ class FormSubmission:
         self.time_completed = time_completed
         self.time_received = time_received
 
-        delta_seconds = (iso8601.parse_date(time_received) - iso8601.parse_date(time_completed)).total_seconds()
-        self.delta_cs_in_hours = delta_seconds / 3600
+        try:
+            delta_seconds = (iso8601.parse_date(time_received) - iso8601.parse_date(time_completed)).total_seconds()
+            self.delta_cs_in_hours = delta_seconds / 3600
+        except iso8601.ParseError:
+            self.delta_cs_in_hours = None
 
     def write(self, writer):
         writer.writerow([
@@ -21,7 +24,7 @@ class FormSubmission:
             self.submitted_by,
             self.time_completed,
             self.time_received,
-            "{0:.1f}".format(self.delta_cs_in_hours)
+            "{0:.1f}".format(self.delta_cs_in_hours) if self.delta_cs_in_hours else ''
         ])
 
 
@@ -51,8 +54,6 @@ def parse_form_doc(doc):
     time_received = source_obj['received_on']
     domain_name = source_obj['domain']
 
-    if not user_id:
-        print doc
     return FormSubmission(domain_name, doc_id, user_id, time_completed, time_received)
 
 
