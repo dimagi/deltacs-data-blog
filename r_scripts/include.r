@@ -2,11 +2,7 @@
 # Some useful functions for R
 # Usage:
 #   > source('r_scripts/include.r')
-#   > options(sqldf.RPostgreSQL.user="commcarehq",
-#      sqldf.RPostgreSQL.password="commcarehq",
-#      sqldf.RPostgreSQL.dbname="datablog",
-#      sqldf.RPostgreSQL.host="localhost",
-#      sqldf.RPostgreSQL.port=5432)
+#   > setupDb("username", "passwd", "dbname")
 #
 #   > installPackages()  # only the first time
 #   > loadPackages()
@@ -24,6 +20,15 @@ installSqlPackages <- function() {
 loadPackages <- function() {
     library("RPostgreSQL")
     library("sqldf")
+}
+
+#' Setup the DB connection
+setupDb <- function(username, password, db_name) {
+    options(sqldf.RPostgreSQL.user=username,
+      sqldf.RPostgreSQL.password=password,
+      sqldf.RPostgreSQL.dbname=db_name,
+      sqldf.RPostgreSQL.host="localhost",
+      sqldf.RPostgreSQL.port=5432)
 }
 
 #' Show the SQL table definition for reference
