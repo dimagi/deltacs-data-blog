@@ -14,27 +14,6 @@
 #   > global_average_hours <- getGlobalAverage()
 #   > print(sprintf("Global average: %s hours", global_average_hours))
 
-
-#' Add a 'deltacs' column to the table containing the
-#' interval between 'received_on' and 'time_end'.
-#'
-#' You should only run this once.
-addDeltacsColumn <- function() {
-    sqldf("ALTER TABLE formdata ADD COLUMN deltacs interval")
-    sqldf("CREATE INDEX formdata_deltacs on formdata (deltacs)")
-    sqldf("UPDATE TABLE formdata SET deltacs = received_on - time_end")
-}
-
-#' Clean the SQL data.
-#' You only need to run this once.
-cleanData <- function() {
-    sqldf("DELETE FROM formdata where time_end < '2011-01-01'")
-    sqldf("DELETE from formdata where user_id = '' or user_id is NULL")
-    sqldf("DELETE from formdata where user_id in ('demo_user', 'commtrack-system', 'system', 'admin', 'bihar-system')")
-    sqldf("DELETE from formdata where char_length(user_id) < 10")
-    sqldf("DELETE from formdata where deltacs <= '0 days'::interval")
-}
-
 #' Install some useful pacakges
 installSqlPackages <- function() {
     install.packages("RPostgreSQL")
