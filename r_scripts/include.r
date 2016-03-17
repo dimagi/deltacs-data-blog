@@ -60,13 +60,33 @@ demoHistogram <- function(sample_size=10000) {
     hist(DF$deltacs)
 }
 
-#' Write a CSV file of the average deltacs (in hours) grouped by user_id
+#' Write a CSV file with some basic deltacs stats grouped by user_id
+#'
+#' File columns:
+#'  row_number
+#'  user_id
+#'  count       Number of forms included in the dataset for this user
+#'  mean        Mean deltacs for this user (hours)
+#'  stddev      Standard deviation of the deltacs for this user (hours)
 #'
 #' @param filename      The name of the file to write the data to.
 #' @param sample_size   The size of the sample you want to compute the averages over. Default = 100000.
 #'                      Set to 0 to compute over entire data set.
-writeGroupAverageData <- function(filename='average_deltacs_by_user.csv', sample_size=100000) {
-    query <- "SELECT user_id, to_hours(avg(deltacs)) as deltacs FROM %s GROUP BY user_id"
+writeGroupStatsData <- function(filename='deltacs_stats_by_user.csv', sample_size=100000) {
+    query <- "
+    SELECT s.user_id, s.count, s.mean / 3600, s.stddev / 3600 FROM (
+        SELECT
+            row_number() OVER w AS rk,
+            user_id,
+            count(*) OVER w AS count,
+            avg(EXTRACT(EPOCH from deltacs)) OVER w AS mean,
+            stddev_pop(EXTRACT(EPOCH from deltacs)) OVER w AS stddev
+        FROM
+            %s
+        WINDOW w AS (PARTITION BY user_id)
+        ) AS s
+    WHERE s.rk = 1;"
+
     if(sample_size == 0) {
         from <- "formdata WHERE deltacs < '60 days'::interval"
     } else {
