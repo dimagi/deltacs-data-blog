@@ -49,14 +49,14 @@ showTableDefinition <- function() {
 #'
 #' @return The global average in hours
 getGlobalAverage <- function() {
-    return(sqldf("SELECT EXTRACT(EPOCH FROM avg(deltacs)) / (60*60) AS deltacs FROM formdata WHERE deltacs < '60 days'::interval")$deltacs)
+    return(sqldf("SELECT to_hours(avg(deltacs)) AS deltacs FROM formdata WHERE deltacs < '60 days'::interval")$deltacs)
 }
 
 #' Show a histogram of the average deltacs for a sample data set.
 #'
 #' @param sample_size   The number of rows to use. Default = 10000
 demoHistogram <- function(sample_size=10000) {
-    DF = sqldf(sprintf("select EXTRACT(EPOCH FROM deltacs) / (60*60) as deltacs from formdata where deltacs < '60 days'::interval limit %i", sample_size))
+    DF = sqldf(sprintf("select to_hours(deltacs) as deltacs from formdata where deltacs < '60 days'::interval limit %i", sample_size))
     hist(DF$deltacs)
 }
 
@@ -66,7 +66,7 @@ demoHistogram <- function(sample_size=10000) {
 #' @param sample_size   The size of the sample you want to compute the averages over. Default = 100000.
 #'                      Set to 0 to compute over entire data set.
 writeGroupAverageData <- function(filename='average_deltacs_by_user.csv', sample_size=100000) {
-    query <- "SELECT user_id, EXTRACT(EPOCH FROM avg(deltacs)) / (60*60) as deltacs FROM %s GROUP BY user_id"
+    query <- "SELECT user_id, to_hours(avg(deltacs)) as deltacs FROM %s GROUP BY user_id"
     if(sample_size == 0) {
         from <- "formdata WHERE deltacs < '60 days'::interval"
     } else {
