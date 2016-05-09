@@ -2,33 +2,50 @@
 # Some useful functions for R
 # Usage:
 #   > source('r_scripts/include.r')
-#   > setupDb("username", "passwd", "dbname")
-#
-#   > installPackages()  # only the first time
-#   > loadPackages()
-#   > demoHistogram()
-#   > global_average_hours <- getGlobalAverage()
-#   > print(sprintf("Global average: %s hours", global_average_hours))
 
 #' Install some useful pacakges
-installSqlPackages <- function() {
-    install.packages("RPostgreSQL")
-    install.packages("sqldf")
+installPackages <- function() {
+    if("RPostgreSQL" %in% rownames(installed.packages()) == FALSE) {
+        install.packages("RPostgreSQL")
+    }
+    if("sqldf" %in% rownames(installed.packages()) == FALSE) {
+        install.packages("sqldf")
+    }
+    if("rjson" %in% rownames(installed.packages()) == FALSE) {
+        install.packages("rjson")
+    }
 }
 
 #' Load some useful packages
 loadPackages <- function() {
     library("RPostgreSQL")
     library("sqldf")
+    library("rjson")
 }
 
 #' Setup the DB connection
-setupDb <- function(username, password, db_name) {
-    options(sqldf.RPostgreSQL.user=username,
-      sqldf.RPostgreSQL.password=password,
-      sqldf.RPostgreSQL.dbname=db_name,
+setupDb <- function() {
+    config <- getConfig()
+    options(sqldf.RPostgreSQL.user=config$username,
+      sqldf.RPostgreSQL.password=config$password,
+      sqldf.RPostgreSQL.dbname=config$db_name,
       sqldf.RPostgreSQL.host="localhost",
       sqldf.RPostgreSQL.port=5432)
+}
+
+getConfig <- function() {
+    fileConn<-file(".conf")
+    if (file.exists(".conf")) {
+        conf <- readLines(fileConn)
+        return(fromJSON(conf))
+    } else {
+        username <- readline(prompt="Enter an database username: ")
+        password <- readline(prompt="Enter an database password: ")
+        db_name <- readline(prompt="Enter an database name: ")
+        config <- list(username=username, password=password, db_name=db_name)
+        cat(toJSON(config), file = '.conf', sep = '\n')
+        return(config)
+    }
 }
 
 #' Show the SQL table definition for reference
