@@ -1,5 +1,6 @@
 
-MIN_NUM_FORMS = 100
+MIN_NUM_FORMS = 5
+BIN_SIZE = 24
 
 plotHistogram <- function() {
 	fullDataset <- read.csv("./data/deltacs_stats_by_user_month.csv")
@@ -7,7 +8,7 @@ plotHistogram <- function() {
 	hist(rowsOfInterest$median_hours, 
 		breaks=getBucketsVector(), 
 		plot=TRUE, freq=TRUE, col="lightblue",
-		main="Median DeltaCS by User",
+		main="Median DeltaCS over a Month by User",
 		xlab="Median DeltaCS (in hours)",
 		ylab="Count")
 }
@@ -20,8 +21,9 @@ filterDataset <- function(dataset) {
 }
 
 getBucketsVector <- function() {
+	return(seq(from=0, to=1512, by=BIN_SIZE))
+	
 	#return(c(seq(from=0, to=100, by=10), 150, 200, seq(from=300, to=500, by=100)))
-	return(seq(from=0, to=1500, by=50))
 	#return(c(seq(from=0, to=500, by=50), seq(from=500, to=1500, by=200)))
 }
 
