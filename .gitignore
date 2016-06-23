@@ -1,3 +1,6 @@
 *.pyc
 .idea
 .conf
+*.DS_Store
+data/*
+.Rapp.history
