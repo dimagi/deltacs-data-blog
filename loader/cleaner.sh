@@ -12,7 +12,7 @@ function run_sql() {
 # Add the deltacs column
 run_sql "ALTER TABLE formdata ADD COLUMN deltacs interval"
 run_sql "CREATE INDEX formdata_deltacs on formdata (deltacs)"
-run_sql "UPDATE TABLE formdata SET deltacs = received_on - time_end"
+run_sql "UPDATE formdata SET deltacs = received_on - time_end"
 
 # Clean the data
 run_sql "DELETE FROM formdata where time_end < '2011-01-01'"
