@@ -14,6 +14,9 @@ installPackages <- function() {
     if("rjson" %in% rownames(installed.packages()) == FALSE) {
         install.packages("rjson")
     }
+    if("reshape" %in% rownames(installed.packages()) == FALSE) {
+        install.packages("reshape")
+    }
 }
 
 #' Load some useful packages
@@ -21,6 +24,7 @@ loadPackages <- function() {
     library("RPostgreSQL")
     library("sqldf")
     library("rjson")
+    library("reshape")
 }
 
 #' Setup the DB connection
@@ -114,4 +118,76 @@ writeGroupStatsData <- function(filename='deltacs_stats_by_user_month.csv', samp
     DF <- sqldf(sprintf(query, from))
     write.csv(DF, filename)
     print(sprintf("Data written to: %s", filename))
+}
+
+
+#' Write a CSV file with one row per user giving the earliest for received date.
+#'
+#' File columns:
+#'  row_number
+#'  domain
+#'  user_id
+#'  first_date
+#'
+#' @param filename      The name of the file to write the data to.
+writeFirstFormDate <- function(filename='first_form_date_per_user.csv') {
+    query <- "
+    SELECT
+        domain,
+        user_id,
+        min(received_on) as first_date
+    FROM formdata
+    GROUP BY domain, user_id;"
+
+    DF <- sqldf(query)
+    DF$first_date = as.POSIXlt(df$first_date, tz="GMT")  # convert back to UTC
+    write.csv(DF, filename)
+    print(sprintf("Data written to: %s", filename))
+}
+
+#' Write a CSV file with one row per containing the number of forms
+#' completed on each day after their first form submission
+#'
+#' File columns:
+#'  domain
+#'  user_id
+#'  1...N       the number of forms submitted N-1 days after the first date of form submission
+#'
+#' @param filename      The name of the file to write the data to.
+write90DayData <- function(first_form_date_per_user_file) {
+    domainUserData <- read.csv(first_form_data_filename)
+    domainUserData[[4]] = as.Date(domainUserData[[4]])
+
+    filename = "90day_data.csv"
+    headers = c(c("domain","user_id"),c(1:90))
+    cat(paste(headers, collapse=","), '\n', file=filename)
+
+    for (index in 1:nrow(domainUserData)) {
+        row = domainUserData[index,]
+        domain = as.character(row$domain)
+        user_id = as.character(row$user_id)
+        first_date = as.Date(row$first_date)
+        DF <- sqldf(sprintf("
+        SELECT
+            domain,
+            user_id,
+            date(received_on) as date,
+            count(*) as form_count
+        FROM
+            formdata
+        WHERE
+            domain = '%s' AND user_id = '%s' AND received_on < '%s'
+        GROUP BY domain, user_id, date(received_on)
+        ", domain, user_id, as.Date(first_date) + 90))
+
+        all_dates = seq(as.Date(row$first_date), as.Date(row$first_date)+89, by="days")
+        missingDates = as.Date(setdiff(all_dates, DF$date), origin="1970-01-01")
+        for (date in missingDates) {
+            DF[nrow(DF)+1,]<-list(domain, user_id, as.Date(date, origin="1970-01-01"), 0)
+        }
+        reshapedData = cast(DF, domain + user_id ~ date, value='form_count')
+
+        write.table(reshapedData, file = filename, sep = ",", append=T, col.names=F, row.names=F)
+        print(sprintf("Data written to: %s, %s, %s", filename, domain, user_id))
+    }
 }
