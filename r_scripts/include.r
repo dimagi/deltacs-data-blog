@@ -14,6 +14,9 @@ installPackages <- function() {
     if("rjson" %in% rownames(installed.packages()) == FALSE) {
         install.packages("rjson")
     }
+    if("reshape" %in% rownames(installed.packages()) == FALSE) {
+        install.packages("reshape")
+    }
 }
 
 #' Load some useful packages
@@ -21,6 +24,7 @@ loadPackages <- function() {
     library("RPostgreSQL")
     library("sqldf")
     library("rjson")
+    library("reshape")
 }
 
 #' Setup the DB connection
