@@ -153,14 +153,16 @@ writeFirstFormDate <- function(filename='first_form_date_per_user.csv') {
 #'  user_id
 #'  1...N       the number of forms submitted N-1 days after the first date of form submission
 #'
-#' @param filename      The name of the file to write the data to.
-write90DayData <- function(first_form_date_per_user_file) {
-    domainUserData <- read.csv(first_form_data_filename)
+#' @param in_filename       The path to the CSV file containing first date data
+#'                          Expected columns: domain, user_id, first_date
+#' @param out_filename      The name of the file to write the data to.
+#' @param n_days            The number of days after the first submission to include
+write90DayData <- function(in_filename, out_filename, n_days=90) {
+    domainUserData <- read.csv(in_filename)
     domainUserData[[4]] = as.Date(domainUserData[[4]])
 
-    filename = "90day_data.csv"
-    headers = c(c("domain","user_id"),c(1:90))
-    cat(paste(headers, collapse=","), '\n', file=filename)
+    headers = c(c("domain","user_id"),c(1:n_days))
+    cat(paste(headers, collapse=","), '\n', file=out_filename)
 
     for (index in 1:nrow(domainUserData)) {
         row = domainUserData[index,]
@@ -178,16 +180,16 @@ write90DayData <- function(first_form_date_per_user_file) {
         WHERE
             domain = '%s' AND user_id = '%s' AND received_on < '%s'
         GROUP BY domain, user_id, date(received_on)
-        ", domain, user_id, as.Date(first_date) + 90))
+        ", domain, user_id, as.Date(first_date) + n_days))
 
-        all_dates = seq(as.Date(row$first_date), as.Date(row$first_date)+89, by="days")
+        all_dates = seq(as.Date(row$first_date), as.Date(row$first_date)+(n_days-1), by="days")
         missingDates = as.Date(setdiff(all_dates, DF$date), origin="1970-01-01")
         for (date in missingDates) {
             DF[nrow(DF)+1,]<-list(domain, user_id, as.Date(date, origin="1970-01-01"), 0)
         }
         reshapedData = cast(DF, domain + user_id ~ date, value='form_count')
 
-        write.table(reshapedData, file = filename, sep = ",", append=T, col.names=F, row.names=F)
-        print(sprintf("Data written to: %s, %s, %s", filename, domain, user_id))
+        write.table(reshapedData, file = out_filename, sep = ",", append=T, col.names=F, row.names=F)
+        print(sprintf("Data written to: %s, %s, %s", out_filename, domain, user_id))
     }
 }
