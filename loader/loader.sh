@@ -76,8 +76,10 @@ fi
 
 DATA_EXISTS=$(run_sql "${CHECK_DATA_SQL}")
 if [ -z "${DATA_EXISTS}" ]; then
+    echo  "Loading data"
     run_sql "${LOAD_DATA_SQL}"
 else
     confirm "Table already has data. Do you want to delete existing data before continuing (Ctrl-C to abort)? [y/N]" && run_sql "${TRUNCATE_TABLE_SQL}"
+    echo  "Loading data"
     run_sql "${LOAD_DATA_SQL}"
 fi
