@@ -1,5 +1,7 @@
 
 fullDataset <- read.csv("./data/deltacs_stats_by_user_month.csv")
+datasetStartDate <- as.Date("2011-01-01")
+datasetEndDate <- as.Date("2016-03-01")
 
 
 # FUNCTIONS FOR PLOT BY PROJECT
@@ -25,6 +27,22 @@ plotDeltaCSByMonthForProject <- function(domainName) {
 	yAxisData <- as.numeric(t(getMedianDeltaCSByMonth(dataForDomain)[2]))
 	xAxisData <- seq(1, length(yAxisData))
 	plot(xAxisData, yAxisData, pch = 20, col="blue", xlab="Month", ylab="Median DeltaCS Over A Month For Longest-Running Projects")
+}
+
+
+# FUNCTIONS FOR PLOT OF LONG-RUNNING USERS
+
+getDurationOfUserActivityInDays <- function(userID) {
+    sortedMonthsForUser <- sort(unique(fullDataset[fullDataset$user_id == userID,]$month))
+    lastMonth <- sortedMonthsForUser[length(sortedMonthsForUser)]
+    firstMonth <- sortedMonthsForUser[1]
+    return(as.numeric(as.Date(lastMonth) - as.Date(firstMonth)))
+}
+
+getUsersMeetingPercentageActivityThreshold <- function(percentageThreshold) {
+    totalDays <- as.numeric(datasetEndDate - datasetStartDate)
+    aggregatedByUserDuration <- aggregate(fullDataset$user_id, list(User=fullDataset$user_id), getDurationOfUserActivityInDays)
+    return(aggregatedByUserDuration[(aggregatedByUserDuration$x/totalDays) >= percentageThreshold,])
 }
 
 
