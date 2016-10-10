@@ -2,7 +2,35 @@
 fullDataset <- read.csv("./data/deltacs_stats_by_user_month.csv")
 
 
-plotScatterPlot <- function(useMean) {
+# FUNCTIONS FOR PLOT BY PROJECT
+
+getLengthOfProjectInDays <- function(domainName) {
+	sortedMonthsForDomain <- sort(unique(fullDataset[fullDataset$domain == domainName,]$month))
+	lastMonth <- sortedMonthsForDomain[length(sortedMonthsForDomain)]
+	firstMonth <- sortedMonthsForDomain[1] 
+	return(as.numeric(as.Date(lastMonth) - as.Date(firstMonth)))
+}
+
+getLongestRunningProjects <- function(numProjects) {
+	aggregatedByProjectLength <- aggregate(fullDataset$domain, list(Domain=fullDataset$domain), getLengthOfProjectInDays)
+	sorted <- aggregatedByProjectLength[order(aggregatedByProjectLength$x),]
+	return(tail(sorted, n=numProjects))
+}
+
+plotDeltaCSByMonthForLongestRunningProjects <- function(useMean) {
+}
+
+plotDeltaCSByMonthForProject <- function(domainName) {
+	dataForDomain <- fullDataset[fullDataset$domain == domainName,]
+	yAxisData <- as.numeric(t(getMedianDeltaCSByMonth(dataForDomain)[2]))
+	xAxisData <- seq(1, length(yAxisData))
+	plot(xAxisData, yAxisData, pch = 20, col="blue", xlab="Month", ylab="Median DeltaCS Over A Month For Longest-Running Projects")
+}
+
+
+# FUNCTIONS FOR PLOT OF ALL USERS
+
+plotDeltaCSOverMonthForAllUsers <- function(useMean) {
 	xAxisData <- seq(1,63)
 	if (useMean) {
 		yAxisData <- as.numeric(t(getMeanDeltaCSByMonth()[2]))
@@ -16,34 +44,20 @@ plotScatterPlot <- function(useMean) {
 	#make trendline -- abline(lm(xAxisData ~ yAxisData)) ?
 }
 
-# FUNCTIONS FOR PLOT BY PROJECT
-
-getLengthOfProjectInDays <- function(domainName) {
-	sortedMonthsForDomain <- sort(unique(fullDataset[fullDataset$domain == domainName,]$month))
-	lastMonth <- sortedMonthsForDomain[length(sortedMonthsForDomain)]
-	firstMonth <- sortedMonthsForDomain[1] 
-	return(as.numeric(as.Date(lastMonth) - as.Date(firstMonth)))
-}
-
-getLongestRunningProjects <- function(numProjects) {
-	projectsInOrderOfLength <- fullDataset[order(getLengthOfProjectInDays(fullDataset$domain))]
-	return(projectsInOrderOfLength)
-}
-
-
-# FUNCTIONS FOR ALL PLOT OF ALL USERS
-
-getMeanDeltaCSByMonth <- function() {
-	aggregatedByMonth <- aggregate(fullDataset$mean_hours, list(Month=fullDataset$month), mean)
-	return(aggregatedByMonth)
-}
-
-getMedianDeltaCSByMonth <- function() {
-	aggregatedByMonth <- aggregate(fullDataset$median_hours, list(Month=fullDataset$month), median)
-	return(aggregatedByMonth)
-}
 
 # BASIC FUNCTIONS
+
+# in hours
+getMeanDeltaCSByMonth <- function(dataframe = fullDataset) {
+	aggregatedByMonth <- aggregate(dataframe$mean_hours, list(Month=dataframe$month), mean)
+	return(aggregatedByMonth)
+}
+
+# in hours
+getMedianDeltaCSByMonth <- function(dataframe = fullDataset) {
+	aggregatedByMonth <- aggregate(dataframe$median_hours, list(Month= dataframe$month), median)
+	return(aggregatedByMonth)
+}
 
 getNumUniqueUsers <- function() {
 	return(length(unique(fullDataset$user_id)))
