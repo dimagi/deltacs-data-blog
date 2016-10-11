@@ -4,6 +4,35 @@ primaryDataset <- fullDataset[fullDataset$form_count >= 3,]
 datasetStartDate <- as.Date("2011-01-01")
 datasetEndDate <- as.Date("2016-03-01")
 
+# FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION
+
+getDomainToLocationMapping <- function() {
+	projectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
+	
+}
+
+getCountryForDomain <- function(domainName) {
+	projectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
+	return(parseCountries(projectSpaceDataset[projectSpaceDataset$domain == domainName,]$deployment_countries))
+}
+
+# START HERE
+parseCountries <- function(deploymentCountriesString) {
+	indicesOfSingleQuotes <- 
+	
+	bracketsRemoved <- substring(deploymentCountriesString, 2, nchar(deploymentCountriesString)-1)
+	separatorRemoved <- gsub("u", "", gsub(" u", "", bracketsRemoved))
+	return(separatorRemoved)
+}
+
+getPercentageOfDomainsWithCountryData <- function() {
+	projectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
+	allDomainsFromFormsDataset <- unique(primaryDataset$domain)
+	domainsInPrimaryDataset <- projectSpaceDataset[projectSpaceDataset$domain %in% allDomainsFromFormsDataset,]
+	domainsWithCountryData <- domainsInPrimaryDataset[domainsInPrimaryDataset$deployment_countries != "No countries",]
+	return(nrow(domainsWithCountryData) / length(allDomainsFromFormsDataset))
+}
+
 
 # FUNCTIONS FOR PLOT BY PROJECT
 
