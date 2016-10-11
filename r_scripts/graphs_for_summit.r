@@ -8,9 +8,9 @@ datasetEndDate <- as.Date("2016-03-01")
 # FUNCTIONS FOR PLOT BY PROJECT
 
 getLengthOfProjectInMonths <- function(domainName) {
-	sortedMonthsForDomain <- sort(unique(primaryDataset[fullDataset$domain == domainName,]$month))
-	lastMonth <- sortedMonthsForDomain[length(sortedMonthsForDomain)]
-	firstMonth <- sortedMonthsForDomain[1] 
+	monthsForDomain <- primaryDataset[fullDataset$domain == domainName,]$month
+	lastMonth <- max(as.Date(sortedMonthsForDomain))
+	firstMonth <- min(as.Date(sortedMonthsForDomain))
 	return(getDurationInMonths(firstMonth, lastMonth))
 }
 
@@ -31,17 +31,16 @@ plotDeltaCSByMonthForProject <- function(domainName) {
 # FUNCTIONS FOR PLOT OF LONG-RUNNING USERS
 
 getDurationOfUserActivityInMonths <- function(userID) {
-    sortedMonthsForUser <- sort(unique(primaryDataset[primaryDataset$user_id == userID,]$month))
-    lastMonth <- sortedMonthsForUser[length(sortedMonthsForUser)]
-    firstMonth <- sortedMonthsForUser[1]
+    monthsForUser <- unique(primaryDataset[primaryDataset$user_id == userID,]$month)
+    lastMonth <- max(as.Date(monthsForUser))
+    firstMonth <- min(as.Date(monthsForUser))
     return(getDurationInMonths(firstMonth, lastMonth))
 }
 
 getUsersMeetingPercentageActivityThreshold <- function(percentageThreshold) {
     totalMonthsInDataset <- getDurationInMonths(datasetStartDate, datasetEndDate)
     aggregatedByUserDuration <- aggregate(primaryDataset$user_id, list(User=primaryDataset$user_id), getDurationOfUserActivityInMonths)
-    #return(aggregatedByUserDuration[(aggregatedByUserDuration$x/totalDays) >= percentageThreshold,])
-    return(aggregatedByUserDuration)
+    return(aggregatedByUserDuration[(aggregatedByUserDuration$x/totalMonthsInDataset) >= percentageThreshold,])
 }
 
 
