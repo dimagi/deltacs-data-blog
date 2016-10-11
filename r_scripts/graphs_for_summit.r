@@ -1,5 +1,6 @@
 
 fullDataset <- read.csv("./data/deltacs_stats_by_user_month.csv")
+primaryDataset <- fullDataset[fullDataset$form_count >= 3,]
 datasetStartDate <- as.Date("2011-01-01")
 datasetEndDate <- as.Date("2016-03-01")
 
@@ -7,23 +8,20 @@ datasetEndDate <- as.Date("2016-03-01")
 # FUNCTIONS FOR PLOT BY PROJECT
 
 getLengthOfProjectInMonths <- function(domainName) {
-	sortedMonthsForDomain <- sort(unique(fullDataset[fullDataset$domain == domainName,]$month))
+	sortedMonthsForDomain <- sort(unique(primaryDataset[fullDataset$domain == domainName,]$month))
 	lastMonth <- sortedMonthsForDomain[length(sortedMonthsForDomain)]
 	firstMonth <- sortedMonthsForDomain[1] 
 	return(getDurationInMonths(firstMonth, lastMonth))
 }
 
 getLongestRunningProjects <- function(numProjects) {
-	aggregatedByProjectLength <- aggregate(fullDataset$domain, list(Domain=fullDataset$domain), getLengthOfProjectInMonths)
+	aggregatedByProjectLength <- aggregate(primaryDataset$domain, list(Domain=primaryDataset$domain), getLengthOfProjectInMonths)
 	sorted <- aggregatedByProjectLength[order(aggregatedByProjectLength$x),]
 	return(tail(sorted, n=numProjects))
 }
 
-plotDeltaCSByMonthForLongestRunningProjects <- function(useMean) {
-}
-
 plotDeltaCSByMonthForProject <- function(domainName) {
-	dataForDomain <- fullDataset[fullDataset$domain == domainName,]
+	dataForDomain <- primaryDataset[primaryDataset$domain == domainName,]
 	yAxisData <- as.numeric(t(getMedianDeltaCSByMonth(dataForDomain)[2]))
 	xAxisData <- seq(1, length(yAxisData))
 	plot(xAxisData, yAxisData, pch = 20, col="blue", xlab="Month", ylab="Median DeltaCS Over A Month For Longest-Running Projects")
@@ -33,7 +31,7 @@ plotDeltaCSByMonthForProject <- function(domainName) {
 # FUNCTIONS FOR PLOT OF LONG-RUNNING USERS
 
 getDurationOfUserActivityInMonths <- function(userID) {
-    sortedMonthsForUser <- sort(unique(fullDataset[fullDataset$user_id == userID,]$month))
+    sortedMonthsForUser <- sort(unique(primaryDataset[primaryDataset$user_id == userID,]$month))
     lastMonth <- sortedMonthsForUser[length(sortedMonthsForUser)]
     firstMonth <- sortedMonthsForUser[1]
     return(getDurationInMonths(firstMonth, lastMonth))
@@ -41,23 +39,18 @@ getDurationOfUserActivityInMonths <- function(userID) {
 
 getUsersMeetingPercentageActivityThreshold <- function(percentageThreshold) {
     totalMonthsInDataset <- getDurationInMonths(datasetStartDate, datasetEndDate)
-    aggregatedByUserDuration <- aggregate(fullDataset$user_id, list(User=fullDataset$user_id), getDurationOfUserActivityInMonths)
-    return(aggregatedByUserDuration[(aggregatedByUserDuration$x/totalDays) >= percentageThreshold,])
+    aggregatedByUserDuration <- aggregate(primaryDataset$user_id, list(User=primaryDataset$user_id), getDurationOfUserActivityInMonths)
+    #return(aggregatedByUserDuration[(aggregatedByUserDuration$x/totalDays) >= percentageThreshold,])
+    return(aggregatedByUserDuration)
 }
 
 
 # FUNCTIONS FOR PLOT OF ALL USERS
 
-plotDeltaCSOverMonthForAllUsers <- function(useMean) {
+plotDeltaCSOverMonthForAllUsers <- function() {
 	xAxisData <- seq(1,63)
-	if (useMean) {
-		yAxisData <- as.numeric(t(getMeanDeltaCSByMonth()[2]))
-		yLabel <- "Mean DeltaCS over a Month (in hours)"
-	} else {
-		yAxisData <- as.numeric(t(getMedianDeltaCSByMonth()[2]))
-		yLabel <- "Median DeltaCS over a Month (in hours)"
-	}
-	plot(xAxisData, yAxisData, pch = 20, col="blue", xlab="Month", ylab=yLabel)
+	yAxisData <- as.numeric(t(getMedianDeltaCSByMonth()[2]))
+	plot(xAxisData, yAxisData, pch = 20, col="blue", xlab="Month", ylab="Median DeltaCS over a Month (in hours)")
 	#make custom axis
 	#make trendline -- abline(lm(xAxisData ~ yAxisData)) ?
 }
@@ -75,33 +68,33 @@ getDurationInMonths <- function(startMonth, endMonth) {
 }
 
 # in hours
-getMeanDeltaCSByMonth <- function(dataframe = fullDataset) {
+getMeanDeltaCSByMonth <- function(dataframe = primaryDataset) {
 	aggregatedByMonth <- aggregate(dataframe$mean_hours, list(Month=dataframe$month), mean)
 	return(aggregatedByMonth)
 }
 
 # in hours
-getMedianDeltaCSByMonth <- function(dataframe = fullDataset) {
+getMedianDeltaCSByMonth <- function(dataframe = primaryDataset) {
 	aggregatedByMonth <- aggregate(dataframe$median_hours, list(Month= dataframe$month), median)
 	return(aggregatedByMonth)
 }
 
-getNumUniqueUsers <- function() {
-	return(length(unique(fullDataset$user_id)))
+getNumUniqueUsers <- function(dataframe = primaryDataset) {
+	return(length(unique(dataframe$user_id)))
 }
 
-getNumUniqueDomains <- function() {
-	return(length(unique(fullDataset$domain)))
+getNumUniqueDomains <- function(dataframe = primaryDataset) {
+	return(length(unique(dataframe$domain)))
 }
 
-getTotalForms <- function() {
-	return(sum(fullDataset$form_count))
+getTotalForms <- function(dataframe = primaryDataset) {
+	return(sum(dataframe$form_count))
 }
 
-getOverallMean <- function() {
-	return(mean(fullDataset$mean_hours))
+getOverallMean <- function(dataframe = primaryDataset) {
+	return(mean(dataframe$mean_hours))
 }
 
-getOverallMedian <- function() {
-	return(median(fullDataset$median_hours))
+getOverallMedian <- function(dataframe = primaryDataset) {
+	return(median(dataframe$median_hours))
 }
