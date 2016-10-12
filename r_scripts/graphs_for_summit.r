@@ -1,36 +1,60 @@
 
 fullDataset <- read.csv("./data/deltacs_stats_by_user_month.csv")
+hqProjectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
 primaryDataset <- fullDataset[fullDataset$form_count >= 3,]
 datasetStartDate <- as.Date("2011-01-01")
 datasetEndDate <- as.Date("2016-03-01")
 
+NORTHERN_AFRICA <- c("SUDAN", "ALGERIA","EGYPT")
+EASTERN_AFRICA <- c("MOZAMBIQUE", "KENYA", "MALAWI", "UGANDA", "ZIMBABWE", "MADAGASCAR", "ETHIOPIA", "RWANDA", "TANZANIA, UNITED REPUBLIC OF", "ZAMBIA", "BURUNDI", "SOUTH SUDAN", "MAURITIUS")
+WESTERN_AFRICA <- c("MALI", "TOGO", "GUINEA", "SENEGAL", "BENIN", "GHANA", "LIBERIA", "NIGERIA", "SIERRA LEONE", "NIGER", "BURKINA FASO", "GAMBIA", "C\\xd4TE D'IVOIRE")
+MIDDLE_AFRICA <- c("ANGOLA", "CAMEROON", "CHAD")
+SOUTHERN_AFRICA <- c("SOUTH AFRICA", "BOTSWANA", "NAMIBIA", "LESOTHO", "SWAZILAND")
+SOUTHERN_ASIA <- c("NEPAL", "INDIA", "BANGLADESH", "PAKISTAN", "SRI LANKA", "AFGHANISTAN")
+WESTERN_ASIA <- c("IRAQ", "SYRIAN ARAB REPUBLIC", "JORDAN", "LEBANON", "TURKEY")
+SOUTHEASTERN_ASIA <- c("THAILAND", "VIET NAM", "LAO PEOPLE'S DEMOCRATIC REPUBLIC", "MYANMAR", "CAMBODIA", "PHILIPPINES", "MALAYSIA", "TIMOR-LESTE")
+EASTERN_ASIA <- c("CHINA", "KOREA (THE REPUBLIC OF)")
+SOUTH_AMERICA <- c("BRAZIL", "PERU", "BOLIVIA (PLURINATIONAL STATE OF)", "COLOMBIA", "ECUADOR")
+NORTHERN_AMERICA <- c("UNITED STATES OF AMERICA", "CANADA")
+CENTRAL_AMERICA <- c("MEXICO", "HONDURAS", "GUATEMALA", "NICARAGUA", "BELIZE", "EL SALVADOR")
+CARIBBEAN <- c("HAITI", "GRENADA", "DOMINICAN REPUBLIC")
+EUROPE <- c("UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND", "SPAIN", "FRANCE")
+OCEANIA <- c("PAPUA NEW GUINEA", "VANUATU")
+
+
 # FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION
 
 getDomainToLocationMapping <- function() {
-	projectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
 	
 }
 
-getCountryForDomain <- function(domainName) {
-	projectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
-	return(parseCountries(projectSpaceDataset[projectSpaceDataset$domain == domainName,]$deployment_countries))
+# 67 countries
+getAllRepresentedCountries <- function() {
+	return(unique(unlist(Map(getCountriesForDomain, getDomainsWithCountryData()))))
 }
 
-# START HERE
-parseCountries <- function(deploymentCountriesString) {
-	indicesOfSingleQuotes <- 
-	
-	bracketsRemoved <- substring(deploymentCountriesString, 2, nchar(deploymentCountriesString)-1)
-	separatorRemoved <- gsub("u", "", gsub(" u", "", bracketsRemoved))
-	return(separatorRemoved)
+getCountriesForDomain <- function(domainName) {
+	countriesEntryForDomain <- (hqProjectSpaceDataset[hqProjectSpaceDataset$domain == domainName,]$deployment_countries)
+	return(parseCountriesFromEntry(toString(countriesEntryForDomain)))
 }
 
-getPercentageOfDomainsWithCountryData <- function() {
-	projectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
+parseCountriesFromEntry <- function(deploymentCountriesString) {
+	removeLeadingAndTrailingChars <- substring(deploymentCountriesString, 4, nchar(deploymentCountriesString)-2)
+	countries <- strsplit(removeLeadingAndTrailingChars, "', u'")
+	return(countries)
+}
+
+getDomainsWithCountryData <- function() {
 	allDomainsFromFormsDataset <- unique(primaryDataset$domain)
-	domainsInPrimaryDataset <- projectSpaceDataset[projectSpaceDataset$domain %in% allDomainsFromFormsDataset,]
+	domainsInPrimaryDataset <- hqProjectSpaceDataset[hqProjectSpaceDataset$domain %in% allDomainsFromFormsDataset,]
 	domainsWithCountryData <- domainsInPrimaryDataset[domainsInPrimaryDataset$deployment_countries != "No countries",]
-	return(nrow(domainsWithCountryData) / length(allDomainsFromFormsDataset))
+	return(domainsWithCountryData$domain)
+}
+
+# 45%
+getPercentageOfDomainsWithCountryData <- function() {
+	allDomainsFromFormsDataset <- unique(primaryDataset$domain)
+	return(length(getDomainsWithCountryData()) / length(allDomainsFromFormsDataset))
 }
 
 
@@ -125,4 +149,38 @@ getOverallMean <- function(dataframe = primaryDataset) {
 
 getOverallMedian <- function(dataframe = primaryDataset) {
 	return(median(dataframe$median_hours))
+}
+
+getManuallyTaggedGeographicRegion <- function(country) {
+	if (country %in% NORTHERN_AFRICA) {
+		return "Northern Africa"
+	} else if (country %in% EASTERN_AFRICA) {
+		return "Eastern Africa"
+	} else if (country %in% WESTERN_AFRICA) {
+		return "Western Africa"
+	} else if (country %in% MIDDLE_AFRICA) {
+		return "Middle Africa"
+	} else if (country %in% SOUTHERN_AFRICA) {
+		return "Southern Africa"
+	} else if (country %in% SOUTHERN_ASIA) {
+		return "Southern Asia"
+	} else if (country %in% WESTERN_ASIA) {
+		return "Western Asia"
+	} else if (country %in% SOUTHEASTERN_ASIA) {
+		return "Southeastern Asia"
+	} else if (country %in% EASTERN_ASIA) {
+		return "Eastern Asia"
+	}  else if (country %in% SOUTH_AMERICA) {
+		return "South America"
+	} else if (country %in% NORTHERN_AMERICA) {
+		return "Northern America"
+	} else if (country %in% CENTRAL_AMERICA) {
+		return "Central America"
+	} else if (country %in% CARIBBEAN) {
+		return "Caribbean"
+	} else if (country %in% EUROPE) {
+		return "Europe"
+	} else if (country %in% OCEANIA) {
+		return "Oceania"
+	} 
 }
