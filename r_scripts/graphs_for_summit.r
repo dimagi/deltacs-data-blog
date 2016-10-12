@@ -5,6 +5,7 @@ primaryDataset <- fullDataset[fullDataset$form_count >= 3,]
 datasetStartDate <- as.Date("2011-01-01")
 datasetEndDate <- as.Date("2016-03-01")
 
+# Based upon UN Geoscheme
 NORTHERN_AFRICA <- c("SUDAN", "ALGERIA","EGYPT")
 EASTERN_AFRICA <- c("MOZAMBIQUE", "KENYA", "MALAWI", "UGANDA", "ZIMBABWE", "MADAGASCAR", "ETHIOPIA", "RWANDA", "TANZANIA, UNITED REPUBLIC OF", "ZAMBIA", "BURUNDI", "SOUTH SUDAN", "MAURITIUS")
 WESTERN_AFRICA <- c("MALI", "TOGO", "GUINEA", "SENEGAL", "BENIN", "GHANA", "LIBERIA", "NIGERIA", "SIERRA LEONE", "NIGER", "BURKINA FASO", "GAMBIA", "C\\xd4TE D'IVOIRE")
@@ -36,6 +37,10 @@ getAllRepresentedCountries <- function() {
 getCountriesForDomain <- function(domainName) {
 	countriesEntryForDomain <- (hqProjectSpaceDataset[hqProjectSpaceDataset$domain == domainName,]$deployment_countries)
 	return(parseCountriesFromEntry(toString(countriesEntryForDomain)))
+}
+
+getRegionsForDomain <- function(domainName) {
+	return(Map(getManuallyTaggedGeographicRegion, getCountriesForDomain(domainName)))
 }
 
 parseCountriesFromEntry <- function(deploymentCountriesString) {
@@ -153,34 +158,36 @@ getOverallMedian <- function(dataframe = primaryDataset) {
 
 getManuallyTaggedGeographicRegion <- function(country) {
 	if (country %in% NORTHERN_AFRICA) {
-		return "Northern Africa"
+		return("Northern Africa")
 	} else if (country %in% EASTERN_AFRICA) {
-		return "Eastern Africa"
+		return("Eastern Africa")
 	} else if (country %in% WESTERN_AFRICA) {
-		return "Western Africa"
+		return("Western Africa")
 	} else if (country %in% MIDDLE_AFRICA) {
-		return "Middle Africa"
+		return("Middle Africa")
 	} else if (country %in% SOUTHERN_AFRICA) {
-		return "Southern Africa"
+		return("Southern Africa")
 	} else if (country %in% SOUTHERN_ASIA) {
-		return "Southern Asia"
+		return("Southern Asia")
 	} else if (country %in% WESTERN_ASIA) {
-		return "Western Asia"
+		return("Western Asia")
 	} else if (country %in% SOUTHEASTERN_ASIA) {
-		return "Southeastern Asia"
+		return("Southeastern Asia")
 	} else if (country %in% EASTERN_ASIA) {
-		return "Eastern Asia"
+		return("Eastern Asia")
 	}  else if (country %in% SOUTH_AMERICA) {
-		return "South America"
+		return("South America")
 	} else if (country %in% NORTHERN_AMERICA) {
-		return "Northern America"
+		return("Northern America")
 	} else if (country %in% CENTRAL_AMERICA) {
-		return "Central America"
+		return("Central America")
 	} else if (country %in% CARIBBEAN) {
-		return "Caribbean"
+		return("Caribbean")
 	} else if (country %in% EUROPE) {
-		return "Europe"
+		return("Europe")
 	} else if (country %in% OCEANIA) {
-		return "Oceania"
-	} 
+		return("Oceania")
+	} else {
+		return("WARNING: No region found for country " + country)
+	}
 }
