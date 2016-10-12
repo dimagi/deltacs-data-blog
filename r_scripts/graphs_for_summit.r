@@ -25,8 +25,9 @@ OCEANIA <- c("PAPUA NEW GUINEA", "VANUATU")
 
 # FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION
 
-getDomainToLocationMapping <- function() {
-	
+plotDeltaCSForRegion <- function(regionName) {
+	dataForRegion <- primaryDataset[regionName %in% getRegionsForDomain(toString(primaryDataset$domain)),]
+	return(dataForRegion)
 }
 
 # 67 countries
@@ -40,7 +41,7 @@ getCountriesForDomain <- function(domainName) {
 }
 
 getRegionsForDomain <- function(domainName) {
-	return(Map(getManuallyTaggedGeographicRegion, getCountriesForDomain(domainName)))
+	return(unique(Map(getManuallyTaggedGeographicRegion, unlist(getCountriesForDomain(domainName)))))
 }
 
 parseCountriesFromEntry <- function(deploymentCountriesString) {
