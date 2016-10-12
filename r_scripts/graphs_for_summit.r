@@ -36,18 +36,14 @@ getAllRepresentedCountries <- function() {
 }
 
 getCountriesForDomain <- function(domainName) {
-	countriesEntryForDomain <- (hqProjectSpaceDataset[hqProjectSpaceDataset$domain == domainName,]$deployment_countries)
-	return(parseCountriesFromEntry(toString(countriesEntryForDomain)))
+	deploymentCountriesString <- toString(hqProjectSpaceDataset[hqProjectSpaceDataset$domain == domainName,]$deployment_countries)
+    removeLeadingAndTrailingChars <- substring(deploymentCountriesString, 4, nchar(deploymentCountriesString)-2)
+    countries <- strsplit(removeLeadingAndTrailingChars, "', u'")
+    return(countries)
 }
 
 getRegionsForDomain <- function(domainName) {
 	return(unique(Map(getManuallyTaggedGeographicRegion, unlist(getCountriesForDomain(domainName)))))
-}
-
-parseCountriesFromEntry <- function(deploymentCountriesString) {
-	removeLeadingAndTrailingChars <- substring(deploymentCountriesString, 4, nchar(deploymentCountriesString)-2)
-	countries <- strsplit(removeLeadingAndTrailingChars, "', u'")
-	return(countries)
 }
 
 getDomainsWithCountryData <- function() {
