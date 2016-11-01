@@ -1,4 +1,3 @@
-
 fullDataset <- read.csv("./data/deltacs_stats_by_user_month.csv")
 hqProjectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
 primaryDataset <- fullDataset[fullDataset$form_count >= 3,]
@@ -26,24 +25,50 @@ OCEANIA <- c("PAPUA NEW GUINEA", "VANUATU")
 # FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION
 
 plotDeltaCSForRegion <- function(regionName) {
-	dataForRegion <- primaryDataset[regionName %in% getRegionsForDomain(toString(primaryDataset$domain)),]
-	return(dataForRegion)
+	datasetWithCountryData <- primaryDataset[primaryDataset$domain %in% getDomainsWithCountryData(),]
+	dataForRegion <- datasetWithCountryData[getBooleanVectorForProjectsInRegion(regionName, datasetWithCountryData$domain),]
+	return(dataForRegion)$domain
 }
 
-# 67 countries
-getAllRepresentedCountries <- function() {
-	return(unique(unlist(Map(getCountriesForDomain, getDomainsWithCountryData()))))
+getBooleanVectorForProjectsInRegion <- function(region, listOfDomains) {
+	domainsForRegion <- getDomainsForRegion(region)
+	return(lapply(listOfDomains, customContains, domainsForRegion))
 }
 
-getCountriesForDomain <- function(domainName) {
-	deploymentCountriesString <- toString(hqProjectSpaceDataset[hqProjectSpaceDataset$domain == domainName,]$deployment_countries)
-    removeLeadingAndTrailingChars <- substring(deploymentCountriesString, 4, nchar(deploymentCountriesString)-2)
-    countries <- strsplit(removeLeadingAndTrailingChars, "', u'")
-    return(countries)
+isProjectDeployedInRegion <- function(regionName, domainName) {
+	return(regionName %in% getRegionsForDomain(domainName))
 }
 
 getRegionsForDomain <- function(domainName) {
-	return(unique(Map(getManuallyTaggedGeographicRegion, unlist(getCountriesForDomain(domainName)))))
+	regions <- unique(lapply(unlist(getCountriesForDomain(domainName)), getManuallyTaggedGeographicRegion))
+	return(regions)
+}
+
+# return all domains for which there is an intersection between countriesForRegion and getCountriesForDomain() for that domain
+getDomainsForRegion <- function(regionName) {
+	countriesForRegion <- getCountriesForRegion(regionName)
+	domainsWithCountryData <- getDomainsWithCountryData()
+	
+	listOfCountriesForEachDomain <- lapply(domainsWithCountryData, getCountriesForDomain)
+	intersectionVector <- lapply(listOfCountriesForEachDomain, intersect, countriesForRegion)
+	booleanVector <- lapply(intersectionVector, customVectorNotEmpty)
+	
+	# STUCK HERE - figure out how to filter domainsWithCountryData by booleanVector (problem is that domainsWithCountryData is an atomic vector)
+}
+
+customVectorNotEmpty <- function(vector) {
+	return(length(vector) > 0)
+}
+
+customContains <- function(vector, item) {
+	return(item %in% vector)
+}
+
+getCountriesForDomain <- function(domainName) {
+	deploymentCountriesString <- toString(hqProjectSpaceDataset[hqProjectSpaceDataset$domain == toString(domainName),]$deployment_countries)
+    removeLeadingAndTrailingChars <- substring(deploymentCountriesString, 4, nchar(deploymentCountriesString)-2)
+    countries <- strsplit(removeLeadingAndTrailingChars, "', u'")
+    return(countries)
 }
 
 getDomainsWithCountryData <- function() {
@@ -51,6 +76,11 @@ getDomainsWithCountryData <- function() {
 	domainsInPrimaryDataset <- hqProjectSpaceDataset[hqProjectSpaceDataset$domain %in% allDomainsFromFormsDataset,]
 	domainsWithCountryData <- domainsInPrimaryDataset[domainsInPrimaryDataset$deployment_countries != "No countries",]
 	return(domainsWithCountryData$domain)
+}
+
+# 67 countries
+getAllRepresentedCountries <- function() {
+	return(unique(unlist(lapply(getDomainsWithCountryData(), getCountriesForDomain))))
 }
 
 # 45%
@@ -153,7 +183,42 @@ getOverallMedian <- function(dataframe = primaryDataset) {
 	return(median(dataframe$median_hours))
 }
 
+getCountriesForRegion <- function(region) {
+	if (region == "Northern Africa") {
+		return(NORTHERN_AFRICA)
+	} else if (region == "Eastern Africa") {
+		return(EASTERN_AFRICA)
+	} else if (region == "Western Africa") {
+		return(WESTERN_AFRICA)
+	} else if (region == "Middle Africa") {
+		return(MIDDLE_AFRICA)
+	} else if (region == "Southern Africa") {
+		return(SOUTHERN_AFRICA)
+	} else if (region == "Southern Asia") {
+		return(SOUTHERN_ASIA)
+	} else if (region == "Western Asia") {
+		return(WESTERN_ASIA)
+	} else if (region == "Southeastern Asia") {
+		return(SOUTHEASTERN_ASIA)
+	} else if (regino == "Eastern Asia") {
+		return(EASTERN_ASIA)
+	}  else if (region == "South America") {
+		return(SOUTH_AMERICA)
+	} else if (region == "Northern America") {
+		return(NORTHERN_AMERICA)
+	} else if (region == "Central America") {
+		return(CENTRAL_AMERICA)
+	} else if (region == "Caribbean") {
+		return(CARIBBEAN)
+	} else if (region == "Europe") {
+		return(EUROPE)
+	} else if (region == "Oceania") {
+		return(OCEANIA)
+	} 
+}
+
 getManuallyTaggedGeographicRegion <- function(country) {
+	country <- toupper(country)
 	if (country %in% NORTHERN_AFRICA) {
 		return("Northern Africa")
 	} else if (country %in% EASTERN_AFRICA) {
@@ -185,6 +250,6 @@ getManuallyTaggedGeographicRegion <- function(country) {
 	} else if (country %in% OCEANIA) {
 		return("Oceania")
 	} else {
-		return("WARNING: No region found for country " + country)
+		sprintf("WARNING: No region found for country %s", country)
 	}
 }
