@@ -22,74 +22,6 @@ EUROPE <- c("UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND", "SPAIN", "FR
 OCEANIA <- c("PAPUA NEW GUINEA", "VANUATU")
 
 
-# FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION
-
-plotDeltaCSForRegion <- function(regionName) {
-	datasetWithCountryData <- primaryDataset[primaryDataset$domain %in% getDomainsWithCountryData(),]
-	dataForRegion <- datasetWithCountryData[getBooleanVectorForProjectsInRegion(regionName, datasetWithCountryData$domain),]
-	return(dataForRegion)$domain
-}
-
-getBooleanVectorForProjectsInRegion <- function(region, listOfDomains) {
-	domainsForRegion <- getDomainsForRegion(region)
-	return(lapply(listOfDomains, customContains, domainsForRegion))
-}
-
-isProjectDeployedInRegion <- function(regionName, domainName) {
-	return(regionName %in% getRegionsForDomain(domainName))
-}
-
-getRegionsForDomain <- function(domainName) {
-	regions <- unique(lapply(unlist(getCountriesForDomain(domainName)), getManuallyTaggedGeographicRegion))
-	return(regions)
-}
-
-# return all domains for which there is an intersection between countriesForRegion and getCountriesForDomain() for that domain
-getDomainsForRegion <- function(regionName) {
-	countriesForRegion <- getCountriesForRegion(regionName)
-	domainsWithCountryData <- getDomainsWithCountryData()
-	
-	listOfCountriesForEachDomain <- lapply(domainsWithCountryData, getCountriesForDomain)
-	intersectionVector <- lapply(listOfCountriesForEachDomain, intersect, countriesForRegion)
-	booleanVector <- lapply(intersectionVector, customVectorNotEmpty)
-	
-	# STUCK HERE - figure out how to filter domainsWithCountryData by booleanVector (problem is that domainsWithCountryData is an atomic vector)
-}
-
-customVectorNotEmpty <- function(vector) {
-	return(length(vector) > 0)
-}
-
-customContains <- function(vector, item) {
-	return(item %in% vector)
-}
-
-getCountriesForDomain <- function(domainName) {
-	deploymentCountriesString <- toString(hqProjectSpaceDataset[hqProjectSpaceDataset$domain == toString(domainName),]$deployment_countries)
-    removeLeadingAndTrailingChars <- substring(deploymentCountriesString, 4, nchar(deploymentCountriesString)-2)
-    countries <- strsplit(removeLeadingAndTrailingChars, "', u'")
-    return(countries)
-}
-
-getDomainsWithCountryData <- function() {
-	allDomainsFromFormsDataset <- unique(primaryDataset$domain)
-	domainsInPrimaryDataset <- hqProjectSpaceDataset[hqProjectSpaceDataset$domain %in% allDomainsFromFormsDataset,]
-	domainsWithCountryData <- domainsInPrimaryDataset[domainsInPrimaryDataset$deployment_countries != "No countries",]
-	return(domainsWithCountryData$domain)
-}
-
-# 67 countries
-getAllRepresentedCountries <- function() {
-	return(unique(unlist(lapply(getDomainsWithCountryData(), getCountriesForDomain))))
-}
-
-# 45%
-getPercentageOfDomainsWithCountryData <- function() {
-	allDomainsFromFormsDataset <- unique(primaryDataset$domain)
-	return(length(getDomainsWithCountryData()) / length(allDomainsFromFormsDataset))
-}
-
-
 # FUNCTIONS FOR PLOT BY PROJECT
 
 getLengthOfProjectInMonths <- function(domainName) {
@@ -253,3 +185,71 @@ getManuallyTaggedGeographicRegion <- function(country) {
 		sprintf("WARNING: No region found for country %s", country)
 	}
 }
+
+# FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION
+
+plotDeltaCSForRegion <- function(regionName) {
+	datasetWithCountryData <- primaryDataset[primaryDataset$domain %in% getDomainsWithCountryData(),]
+	dataForRegion <- datasetWithCountryData[getBooleanVectorForProjectsInRegion(regionName, datasetWithCountryData$domain),]
+	return(dataForRegion)$domain
+}
+
+getBooleanVectorForProjectsInRegion <- function(region, listOfDomains) {
+	domainsForRegion <- getDomainsForRegion(region)
+	return(lapply(listOfDomains, customContains, domainsForRegion))
+}
+
+isProjectDeployedInRegion <- function(regionName, domainName) {
+	return(regionName %in% getRegionsForDomain(domainName))
+}
+
+getRegionsForDomain <- function(domainName) {
+	regions <- unique(lapply(unlist(getCountriesForDomain(domainName)), getManuallyTaggedGeographicRegion))
+	return(regions)
+}
+
+# return all domains for which there is an intersection between countriesForRegion and getCountriesForDomain() for that domain
+getDomainsForRegion <- function(regionName) {
+	countriesForRegion <- getCountriesForRegion(regionName)
+	domainsWithCountryData <- getDomainsWithCountryData()
+	
+	listOfCountriesForEachDomain <- lapply(domainsWithCountryData, getCountriesForDomain)
+	intersectionVector <- lapply(listOfCountriesForEachDomain, intersect, countriesForRegion)
+	booleanVector <- lapply(intersectionVector, customVectorNotEmpty)
+	
+	# STUCK HERE - figure out how to filter domainsWithCountryData by booleanVector (problem is that domainsWithCountryData is an atomic vector)
+}
+
+customVectorNotEmpty <- function(vector) {
+	return(length(vector) > 0)
+}
+
+customContains <- function(vector, item) {
+	return(item %in% vector)
+}
+
+getCountriesForDomain <- function(domainName) {
+	deploymentCountriesString <- toString(hqProjectSpaceDataset[hqProjectSpaceDataset$domain == toString(domainName),]$deployment_countries)
+    removeLeadingAndTrailingChars <- substring(deploymentCountriesString, 4, nchar(deploymentCountriesString)-2)
+    countries <- strsplit(removeLeadingAndTrailingChars, "', u'")
+    return(countries)
+}
+
+getDomainsWithCountryData <- function() {
+	allDomainsFromFormsDataset <- unique(primaryDataset$domain)
+	domainsInPrimaryDataset <- hqProjectSpaceDataset[hqProjectSpaceDataset$domain %in% allDomainsFromFormsDataset,]
+	domainsWithCountryData <- domainsInPrimaryDataset[domainsInPrimaryDataset$deployment_countries != "No countries",]
+	return(domainsWithCountryData$domain)
+}
+
+# 67 countries
+getAllRepresentedCountries <- function() {
+	return(unique(unlist(lapply(getDomainsWithCountryData(), getCountriesForDomain))))
+}
+
+# 45%
+getPercentageOfDomainsWithCountryData <- function() {
+	allDomainsFromFormsDataset <- unique(primaryDataset$domain)
+	return(length(getDomainsWithCountryData()) / length(allDomainsFromFormsDataset))
+}
+
