@@ -21,6 +21,35 @@ CARIBBEAN <- c("HAITI", "GRENADA", "DOMINICAN REPUBLIC")
 EUROPE <- c("UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND", "SPAIN", "FRANCE")
 OCEANIA <- c("PAPUA NEW GUINEA", "VANUATU")
 
+# FUNCTIONS FOR HISTOGRAMS
+
+plotAllUsersHistogram <- function(dataset, title, bucketsVector) {
+	hist(dataset$median_hours, 
+		breaks=bucketsVector, 
+		plot=TRUE, freq=TRUE, col="lightblue",
+		main=title,
+		xlab="Median DeltaCS (in hours)",
+		ylab="Count")
+}
+
+plotLastNMonthsHistogram <- function(numMonths) {
+	plotAllUsersHistogram(getDataForLastNMonths(numMonths), paste("Median DeltaCS over Last", numMonths, "Months"), getFullRangeBucketsVector())
+}
+
+plotLastNMonthsWithMaxDeltaCS <- function(numMonths, maxDeltaCSValue) {
+	filteredByMonths <- getDataForLastNMonths(numMonths)
+	filteredByValue <- filteredByMonths[filteredByMonths$median_hours <= maxDeltaCSValue,]
+	plotAllUsersHistogram(filteredByValue, paste("Median DeltaCS over Last", numMonths, "Months (Capped at DeltaCS of", maxDeltaCSValue, "Hours)"), getBucketsVectorUpTo(maxDeltaCSValue))
+}
+
+getBucketsVectorUpTo <- function(maxValue) {
+	return(seq(from=0, to=maxValue, by=24))
+}
+
+getFullRangeBucketsVector <- function() {
+	return(seq(from=0, to=1512, by=24))
+}
+
 # FUNCTIONS FOR COMPUTING VARIABILITY METRIC
 
 
@@ -43,7 +72,8 @@ plotDeltaCSByMonthForProject <- function(domainName) {
 	dataForDomain <- primaryDataset[primaryDataset$domain == domainName,]
 	yAxisData <- as.numeric(t(getMedianDeltaCSByMonth(dataForDomain)[2]))
 	xAxisData <- seq(1, length(yAxisData))
-	plot(xAxisData, yAxisData, pch = 20, col="blue", xlab="Month", ylab="Median DeltaCS Over A Month For Longest-Running Projects")
+	plot(xAxisData, yAxisData, pch = 20, col="blue", xlab="Month", ylab="Median DeltaCS (in hours)")
+	title(domainName)
 }
 
 
@@ -93,6 +123,10 @@ plotDeltaCSOverMonthForAllUsers <- function() {
 
 
 # UTIL FUNCTIONS
+
+getDataForLastNMonths <- function(numMonths) {
+	return(primaryDataset[getDurationInMonths(primaryDataset$month, datasetEndDate) <= numMonths,])
+}
 
 # Assumes that startMonth and endMonth are dates in the form of yyyy-mm-01, such that the date really
 # represents a month in which a project or user was active, as opposed to a specific date on which they started/ended
