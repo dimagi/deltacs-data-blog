@@ -205,18 +205,31 @@ getLargestProjectsWithCountryDataSortedByDeltaCS <- function(numProjects) {
 	datasetWithCountryData <- primaryDataset[primaryDataset$domain %in% getDomainsWithCountryData(),]
 	largeDomainsWithCountryData <- getLargestProjects(datasetWithCountryData, numProjects)
 	filtered <- primaryDataset[primaryDataset$domain %in% largeDomainsWithCountryData,]
-	aggregatedByMeanDeltaCSForProject <- aggregate(filtered$median_hours, list(Domain=filtered$domain), median)
-	sorted <- aggregatedByMeanDeltaCSForProject[order(aggregatedByMeanDeltaCSForProject$x),]
+	return(sortFrameByMedianDeltaCS(filtered))
+}
+
+sortFrameByMedianDeltaCS <- function(dataframe) {
+	aggregatedByMedianDeltaCSForProject <- aggregate(dataframe$median_hours, list(Domain=dataframe$domain), median)
+	sorted <- aggregatedByMedianDeltaCSForProject[order(aggregatedByMedianDeltaCSForProject$x),]
 	return(sorted)
 }
 
-getHighestDeltaCSLargeProjectsTaggedByRegion <- function(numProjects) {
-	
-
+getHighestDeltaCSProjectsWithCountryData <- function(numProjects) {
+	datasetWithCountryData <- primaryDataset[primaryDataset$domain %in% getDomainsWithCountryData(),]
+	return(tail(sortFrameByMedianDeltaCS(datasetWithCountryData), numProjects))
 }
 
-getLowestDeltaCSLargeProjectsTaggedByRegion <- function() {
-	
+getLowestDeltaCSProjectsWithCountryData <- function(numProjects) {
+	datasetWithCountryData <- primaryDataset[primaryDataset$domain %in% getDomainsWithCountryData(),]
+	return(head(sortFrameByMedianDeltaCS(datasetWithCountryData), numProjects))
+}
+
+getHighestDeltaCSLargeProjects <- function(numProjectsToIncludeInLargest, numProjectsToReturn) {
+	return(tail(getLargestProjectsWithCountryDataSortedByDeltaCS(numProjectsToIncludeInLargest), numProjectsToReturn))
+}
+
+getLowestDeltaCSLargeProjects <- function(numProjectsToIncludeInLargest, numProjectsToReturn) {
+	return(head(getLargestProjectsWithCountryDataSortedByDeltaCS(numProjectsToIncludeInLargest), numProjectsToReturn))
 }
 
 plotDeltaCSForRegion <- function(regionName) {
@@ -261,6 +274,9 @@ customContains <- function(vector, item) {
 
 getCountriesForDomain <- function(domainName) {
 	deploymentCountriesString <- toString(hqProjectSpaceDataset[hqProjectSpaceDataset$domain == toString(domainName),]$deployment_countries)
+    if (deploymentCountriesString == "No countries") {
+    	return("")
+    }
     removeLeadingAndTrailingChars <- substring(deploymentCountriesString, 4, nchar(deploymentCountriesString)-2)
     countries <- strsplit(removeLeadingAndTrailingChars, "', u'")
     return(countries)
