@@ -32,14 +32,39 @@ plotAllUsersHistogram <- function(dataset, title, bucketsVector) {
 		ylab="Count")
 }
 
-plotLastNMonthsHistogram <- function(numMonths) {
+histForLastNMonths <- function(numMonths) {
 	plotAllUsersHistogram(getDataForLastNMonths(numMonths), paste("Median DeltaCS over Last", numMonths, "Months"), getFullRangeBucketsVector())
 }
 
-plotLastNMonthsWithMaxDeltaCS <- function(numMonths, maxDeltaCSValue) {
+histForLastNMonthsWithMaxDeltaCS <- function(numMonths, maxDeltaCSValue) {
 	filteredByMonths <- getDataForLastNMonths(numMonths)
 	filteredByValue <- filteredByMonths[filteredByMonths$median_hours <= maxDeltaCSValue,]
 	plotAllUsersHistogram(filteredByValue, paste("Median DeltaCS over Last", numMonths, "Months (Capped at DeltaCS of", maxDeltaCSValue, "Hours)"), getBucketsVectorUpTo(maxDeltaCSValue))
+}
+
+histForLastNMonthsExcludeLargest <- function(numMonths, numProjectsToExclude) {
+	filteredByMonths <- getDataForLastNMonths(numMonths)
+	largestProjects <- getLargestProjects(numProjectsToExclude)
+	excludeLargeProjects <- filteredByMonths[!(filteredByMonths$domain %in% largestProjects),]
+	plotAllUsersHistogram(excludeLargeProjects, paste("Median DeltaCS over Last", numMonths, "Months (Excluding Largest", numProjectsToExclude, "Projects)"), getFullRangeBucketsVector())
+}
+
+histForLastNMonthsExcludeLargestWithMaxDeltaCS <- function(numMonths, maxDeltaCSValue, numProjectsToExclude) {
+	filteredByMonths <- getDataForLastNMonths(numMonths)
+	largestProjects <- getLargestProjects(numProjectsToExclude)
+	excludeLargeProjects <- filteredByMonths[!(filteredByMonths$domain %in% largestProjects),]
+	filteredByValue <- excludeLargeProjects[excludeLargeProjects$median_hours <= maxDeltaCSValue,]
+	plotAllUsersHistogram(filteredByValue, paste("Median DeltaCS over Last", numMonths), getBucketsVectorUpTo(maxDeltaCSValue))
+}
+
+getLargestProjects <- function(numProjects) {
+	aggregatedByNumForms <- aggregate(primaryDataset$form_count, list(domain=primaryDataset$domain), sum)
+	sorted <- aggregatedByNumForms[order(aggregatedByNumForms $x),]$domain
+	return(tail(sorted, n=numProjects))
+}
+
+getDataForLastNMonths <- function(numMonths) {
+	return(primaryDataset[getDurationInMonths(primaryDataset$month, datasetEndDate) <= numMonths,])
 }
 
 getBucketsVectorUpTo <- function(maxValue) {
@@ -50,7 +75,12 @@ getFullRangeBucketsVector <- function() {
 	return(seq(from=0, to=1512, by=24))
 }
 
-# FUNCTIONS FOR COMPUTING VARIABILITY METRIC
+
+# FUNCTIONS FOR PLOT OF VARIABILITY V. MEDIAN
+
+getDataForProjectsRunningLongerThanXMonths <- function(numMonths) {
+	return(unique(primaryDataset[getLengthOfProjectInMonths(primaryDataset$domain) >= numMonths,]$domain))
+}
 
 
 # FUNCTIONS FOR PLOT BY PROJECT
@@ -123,10 +153,6 @@ plotDeltaCSOverMonthForAllUsers <- function() {
 
 
 # UTIL FUNCTIONS
-
-getDataForLastNMonths <- function(numMonths) {
-	return(primaryDataset[getDurationInMonths(primaryDataset$month, datasetEndDate) <= numMonths,])
-}
 
 # Assumes that startMonth and endMonth are dates in the form of yyyy-mm-01, such that the date really
 # represents a month in which a project or user was active, as opposed to a specific date on which they started/ended
