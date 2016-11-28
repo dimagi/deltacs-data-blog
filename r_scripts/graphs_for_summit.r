@@ -70,12 +70,41 @@ getFullRangeBucketsVector <- function() {
 }
 
 
-# FUNCTIONS FOR PLOT OF VARIABILITY V. MEDIAN
+# FUNCTIONS FOR PLOT OF VARIABILITY V. MEAN
 
-getDataForProjectsRunningLongerThanXMonths <- function(numMonths) {
-	return(unique(primaryDataset[getLengthOfProjectInMonths(primaryDataset$domain) >= numMonths,]$domain))
+getStandardDevOfMedianDeltaCSForProject <- function(domainName) {
+	return(sd(primaryDataset[primaryDataset$domain == domainName,]$median_hours))
 }
 
+getMeanOfMedianDeltaCSForProject <- function(domainName) {
+	return(mean(primaryDataset[primaryDataset$domain == domainName,]$median_hours))
+}
+
+getVarianceOfMedianDeltaCSForProject <- function(domainName) {
+	return(var(primaryDataset[primaryDataset$domain == domainName,]$median_hours))
+}
+
+getCorrelationBetweenMeanAndVariance <- function() {
+	longestRunningProjects <- getLongestRunningProjects(185)
+	meanData <- unlist(lapply(longestRunningProjects$Domain, getMeanOfMedianDeltaCSForProject))
+	varianceData <- unlist(lapply(longestRunningProjects$Domain, getVarianceOfMedianDeltaCSForProject))
+	cor(meanData, varianceData)
+}
+
+getCorrelationBetweenMeanAndStdDev <- function() {
+	longestRunningProjects <- getLongestRunningProjects(185)
+	meanData <- unlist(lapply(longestRunningProjects$Domain, getMeanOfMedianDeltaCSForProject))
+	stdDevData <- unlist(lapply(longestRunningProjects$Domain, getStandardDevOfMedianDeltaCSForProject))
+	cor(meanData, stdDevData)
+}
+
+plotVariabilityVsAverage <- function() {
+	longestRunningProjects <- getLongestRunningProjects(185) # this gives us all projects running for >= 18 months
+	xAxisData <- unlist(lapply(longestRunningProjects$Domain, getStandardDevOfMedianDeltaCSForProject))
+	yAxisData <- unlist(lapply(longestRunningProjects$Domain, getMeanOfMedianDeltaCSForProject))
+	plot(xAxisData, yAxisData, pch = 20, col="blue", xlab="Standard Deviation of Median DeltaCS", ylab="Mean of Median DeltaCS")
+	title("Plot of Variability vs. Average for Projects Running >= 18 months")
+}
 
 # FUNCTIONS FOR PLOT BY PROJECT
 
