@@ -228,7 +228,7 @@ getMedianDeltaCSForProject <- function(domainName) {
 	return(median(primaryDataset[primaryDataset$domain == domainName,]$median_hours))
 }
 
-# FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION
+# FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION -- ATTEMPT 2
 
 getLargestProjectsWithCountryDataSortedByDeltaCS <- function(numProjects) {
 	datasetWithCountryData <- primaryDataset[primaryDataset$domain %in% getDomainsWithCountryData(),]
@@ -260,6 +260,29 @@ getHighestDeltaCSLargeProjects <- function(numProjectsToIncludeInLargest, numPro
 getLowestDeltaCSLargeProjects <- function(numProjectsToIncludeInLargest, numProjectsToReturn) {
 	return(head(getLargestProjectsWithCountryDataSortedByDeltaCS(numProjectsToIncludeInLargest), numProjectsToReturn))
 }
+
+# FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION -- ATTEMPT 3
+
+getMedianDeltaCSForCountry <- function(country) {
+	projectsLocatedInCountry <- hqProjectSpaceDataset[getBooleanVectorForProjectsInCountry(country, hqProjectSpaceDataset$domain),]$domain
+	return(median(primaryDataset[primaryDataset$domain %in% projectsLocatedInCountry,]$median_hours))
+}
+
+getNumDataPointsForCountry <- function(country) {
+	projectsLocatedInCountry <- hqProjectSpaceDataset[getBooleanVectorForProjectsInCountry(country, hqProjectSpaceDataset$domain),]$domain
+	numDataPoints <- nrow(primaryDataset[primaryDataset$domain %in% projectsLocatedInCountry,])
+	return(list(country, numDataPoints))
+}
+
+getBooleanVectorForProjectsInCountry <- function(countryName, listOfDomains) {
+	return(unlist(lapply(listOfDomains, projectIsLocatedInCountry, country=countryName)))
+}
+
+projectIsLocatedInCountry <- function(domain, country) {
+	return(country %in% getCountriesForDomain(domain))
+}
+
+# FUNCTIONS FOR ANALYSIS BY GEOGRAPHIC REGION -- ATTEMPT 1
 
 plotDeltaCSForRegion <- function(regionName) {
 	datasetWithCountryData <- primaryDataset[primaryDataset$domain %in% getDomainsWithCountryData(),]
