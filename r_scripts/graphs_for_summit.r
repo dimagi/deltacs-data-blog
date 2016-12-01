@@ -36,6 +36,11 @@ histForLastNMonths <- function(numMonths) {
 	plotAllUsersHistogram(getDataForLastNMonths(numMonths), paste("Median DeltaCS over Last", numMonths, "Months"), getFullRangeBucketsVector())
 }
 
+ecdfForDataFromLastNMonths <- function(numMonths, title, xmax) {
+	P = ecdf(getDataForLastNMonths(numMonths)$median_hours)
+	plot(P, xlim=c(0, xmax), main=title)
+}
+
 histForLastNMonthsWithMaxDeltaCS <- function(numMonths, maxDeltaCSValue) {
 	filteredByMonths <- getDataForLastNMonths(numMonths)
 	filteredByValue <- filteredByMonths[filteredByMonths$median_hours <= maxDeltaCSValue,]
