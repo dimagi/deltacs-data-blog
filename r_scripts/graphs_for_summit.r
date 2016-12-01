@@ -42,9 +42,27 @@ ecdfForDataFromLastNMonths <- function(numMonths, title, xmax) {
 }
 
 histForLastNMonthsWithMaxDeltaCS <- function(numMonths, maxDeltaCSValue) {
-	filteredByMonths <- getDataForLastNMonths(numMonths)
-	filteredByValue <- filteredByMonths[filteredByMonths$median_hours <= maxDeltaCSValue,]
-	plotAllUsersHistogram(filteredByValue, paste("Median DeltaCS over Last", numMonths, "Months (Capped at DeltaCS of", maxDeltaCSValue, "Hours)"), getBucketsVectorUpTo(maxDeltaCSValue))
+	plotAllUsersHistogram(
+		getDataForLastNMonthsWithMaxDeltaCS(numMonths, maxDeltaCSValue), 
+		paste("Median DeltaCS over Last", numMonths, "Months (Capped at DeltaCS of", maxDeltaCSValue, "Hours)"), 
+		getBucketsVectorUpTo(maxDeltaCSValue)
+	)
+}
+
+histForLastNMonthsWithMaxDeltaCSOfOneDay <- function(numMonths) {
+	plotAllUsersHistogram(
+		getDataForLastNMonthsWithMaxDeltaCS(numMonths, 24), 
+		paste("Median DeltaCS over Last", numMonths, "Months (Capped at DeltaCS of", 24, "Hours)"), 
+		seq(from=0, to=24, by=1)
+	)
+}
+
+histForLastNMonthsWithMaxDeltaCSOfOneHour <- function(numMonths) {
+	plotAllUsersHistogram(
+		getDataForLastNMonthsWithMaxDeltaCS(numMonths, 1), 
+		paste("Median DeltaCS over Last", numMonths, "Months (Capped at DeltaCS of", 1, "Hour)"), 
+		seq(from=0, to=1, by=0.02)
+	)
 }
 
 histForLastNMonthsExcludeLargest <- function(numMonths, numProjectsToExclude) {
@@ -62,8 +80,26 @@ histForLastNMonthsExcludeLargestWithMaxDeltaCS <- function(numMonths, maxDeltaCS
 	plotAllUsersHistogram(filteredByValue, paste("Median DeltaCS over Last", numMonths), getBucketsVectorUpTo(maxDeltaCSValue))
 }
 
+#65,607 data points for last 12 months
 getDataForLastNMonths <- function(numMonths) {
 	return(primaryDataset[getDurationInMonths(primaryDataset$month, datasetEndDate) <= numMonths,])
+}
+
+#55,730 data points for last 12 months w/ 168 hour max
+#54,180 data points for last 12 months w/ 144 hour max
+#52,255 data points for last 12 months w/ 120 hour max
+#49,668 data points for last 12 months w/ 96 hour max
+#46,331 data points for last 12 months w/ 72 hour max
+#42,135 data points for last 12 months w/ 48 hour max
+#35,672 data points for last 12 months w/ 24 hour max
+#14,252 data points for last 12 months w/ 2 hour max
+#12,699 data points for last 12 months w/ 1 hour max
+#11,720 data points for last 12 months w/ 1/2 hour max
+#10,713 data points for last 12 months w/ 10 min max
+#9,035 data points for last 12 months w/ 1 min max
+getDataForLastNMonthsWithMaxDeltaCS <- function(numMonths, maxDeltaCSValue) {
+	filteredByMonths <- getDataForLastNMonths(numMonths)
+	return(filteredByMonths[filteredByMonths$median_hours <= maxDeltaCSValue,])
 }
 
 getBucketsVectorUpTo <- function(maxValue) {
