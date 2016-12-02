@@ -1,6 +1,9 @@
 fullDataset <- read.csv("./data/deltacs_stats_by_user_month.csv")
 hqProjectSpaceDataset <- read.csv("./data/project-space-list-from-hq.csv")
 primaryDataset <- fullDataset[fullDataset$form_count >= 3,]
+attritionDatasetOrig <- read.csv("./data/attritionStats.csv")
+attritionDataset <- attritionDatasetOrig[attritionDatasetOrig$domain %in% unique(primaryDataset$domain) & attritionDatasetOrig$totalUserMonths.12months >= 50,]
+attritionDataset[["domain"]] <- unlist(lapply(attritionDataset[["domain"]], toString))
 datasetStartDate <- as.Date("2011-01-01")
 datasetEndDate <- as.Date("2016-03-01")
 
@@ -20,6 +23,43 @@ CENTRAL_AMERICA <- c("MEXICO", "HONDURAS", "GUATEMALA", "NICARAGUA", "BELIZE", "
 CARIBBEAN <- c("HAITI", "GRENADA", "DOMINICAN REPUBLIC")
 EUROPE <- c("UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND", "SPAIN", "FRANCE")
 OCEANIA <- c("PAPUA NEW GUINEA", "VANUATU")
+
+# FUNCTIONS FOR ATTRITION ANALYSIS
+
+getBucketForAttritionAnalysis <- function(bucketNumber) {
+	sortedEligibleProjects <- projectsEligibleForAttritionAnalysisSortedByDeltaCS()$domain
+	if (bucketNumber == 1) {
+		return(sortedEligibleProjects[1:87])
+	} else if (bucketNumber == 2) {
+		return(sortedEligibleProjects[88:174])
+	} else if (bucketNumber == 3) {
+		return(sortedEligibleProjects[175:262])
+	} else {
+		return(sortedEligibleProjects[263:350])
+	}
+}
+
+projectsEligibleForAttritionAnalysisSortedByDeltaCS <- function() {
+	eligibleProjectsWithAttritionData <- attritionDataset[attritionDataset$monthsFromStartToCurrent >= 12,]$domain
+	deltaCSValues <- unlist(lapply(eligibleProjectsWithAttritionData, getMedianDeltaCSForProject))
+	combinedDataFrame <- data.frame(domain=eligibleProjectsWithAttritionData, deltacs=deltaCSValues)
+	sorted <- combinedDataFrame[order(combinedDataFrame$deltacs),]
+	return(sorted)
+}
+
+get12MonthSurvivalRate <- function(bucketNumber) {
+	eligibleProjects <- getBucketForAttritionAnalysis(bucketNumber)
+	survivedProjects <- attritionDataset[attritionDataset$domain %in% eligibleProjects & attritionDataset$activeLastQuarter.12months == 1,]
+	return(nrow(survivedProjects)/length(eligibleProjects))
+}
+
+get24MonthSurvivalRate <- function(bucketNumber) {
+	projectsInBucket <- getBucketForAttritionAnalysis(bucketNumber)
+	eligibleProjects <- attritionDataset[attritionDataset$domain %in% projectsInBucket & attritionDataset$monthsFromStartToCurrent >= 24,]
+	survivedProjects <- eligibleProjects[eligibleProjects$activeLastQuarter.24months == 1,]
+	return(nrow(survivedProjects)/nrow(eligibleProjects))
+}
+
 
 # FUNCTIONS FOR HISTOGRAMS
 
@@ -266,6 +306,7 @@ getLargestProjects <- function(dataset, numProjects) {
 }
 
 getMedianDeltaCSForProject <- function(domainName) {
+	sprintf(domainName)
 	return(median(primaryDataset[primaryDataset$domain == domainName,]$median_hours))
 }
 
