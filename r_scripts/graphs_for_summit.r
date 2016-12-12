@@ -39,6 +39,18 @@ getBucketForAttritionAnalysis <- function(bucketNumber) {
 	}
 }
 
+getProjectsWithHighestXPercentDeltaCS <- function(percentage) {
+	sortedEligibleProjects <- projectsEligibleForAttritionAnalysisSortedByDeltaCS()$domain
+	count <- 350 * percentage
+	return(tail(sortedEligibleProjects, count))
+}
+
+getProjectsWithLowestXPercentDeltaCS <- function(percentage) {
+	sortedEligibleProjects <- projectsEligibleForAttritionAnalysisSortedByDeltaCS()$domain
+	count <- 350 * percentage
+	return(head(sortedEligibleProjects, count))
+}
+
 projectsEligibleForAttritionAnalysisSortedByDeltaCS <- function() {
 	eligibleProjectsWithAttritionData <- attritionDataset[attritionDataset$monthsFromStartToCurrent >= 12,]$domain
 	deltaCSValues <- unlist(lapply(eligibleProjectsWithAttritionData, getMedianDeltaCSForProject))
@@ -47,17 +59,26 @@ projectsEligibleForAttritionAnalysisSortedByDeltaCS <- function() {
 	return(sorted)
 }
 
-get12MonthSurvivalRate <- function(bucketNumber) {
-	eligibleProjects <- getBucketForAttritionAnalysis(bucketNumber)
-	survivedProjects <- attritionDataset[attritionDataset$domain %in% eligibleProjects & attritionDataset$activeLastQuarter.12months == 1,]
-	return(nrow(survivedProjects)/length(eligibleProjects))
+get12MonthSurvivalRateByBucket <- function(bucketNumber) {
+	projectsInBucket <- getBucketForAttritionAnalysis(bucketNumber)
+	return(get12MonthSurvivalRate(projectsInBucket))
 }
 
-get24MonthSurvivalRate <- function(bucketNumber) {
+get12MonthSurvivalRate <- function(setOfProjects) {
+	survivedProjects <- attritionDataset[attritionDataset$domain %in% setOfProjects & attritionDataset$activeLastQuarter.12months == 1,]
+	return(nrow(survivedProjects)/length(setOfProjects))
+}
+
+get24MonthSurvivalRateByBucket <- function(bucketNumber) {
 	projectsInBucket <- getBucketForAttritionAnalysis(bucketNumber)
-	eligibleProjects <- attritionDataset[attritionDataset$domain %in% projectsInBucket & attritionDataset$monthsFromStartToCurrent >= 24,]
-	survivedProjects <- eligibleProjects[eligibleProjects$activeLastQuarter.24months == 1,]
-	return(nrow(survivedProjects)/nrow(eligibleProjects))
+	return(get24MonthSurvivalRate(projectsInBucket))
+}
+
+get24MonthSurvivalRate <- function(setOfProjects) {
+	eligibleProjects <- attritionDataset[attritionDataset$domain %in% setOfProjects & attritionDataset$monthsFromStartToCurrent >= 24,]
+	return(toString(nrow(eligibleProjects)))
+	#survivedProjects <- eligibleProjects[eligibleProjects$activeLastQuarter.24months == 1,]
+	#return(nrow(survivedProjects)/nrow(eligibleProjects))
 }
 
 
